@@ -540,9 +540,6 @@ export async function GET() {
                 "Unix timestamp (`uint32`) until which the order is valid.",
               type: "integer",
             },
-            appData: {
-              $ref: "#/components/schemas/AppDataHash",
-            },
             feeAmount: {
               description: "feeRatio * sellAmount + minimal_fee in atoms.",
               allOf: [{ $ref: "#/components/schemas/TokenAmount" }],

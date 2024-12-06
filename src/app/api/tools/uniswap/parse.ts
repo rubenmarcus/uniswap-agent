@@ -5,6 +5,7 @@ import {
   TokenInfo,
   getSafeBalances,
   TokenBalance,
+  BlockchainMapping,
 } from "@bitteprotocol/agent-sdk";
 import { NATIVE_ASSET } from "../util";
 
@@ -22,6 +23,8 @@ export interface ParsedQuoteRequest {
 
 export async function parseQuoteRequest(
   req: NextRequest,
+  tokenMap: BlockchainMapping,
+  zerionKey?: string,
 ): Promise<ParsedQuoteRequest> {
   // TODO - Add Type Guard on Request (to determine better if it needs processing below.)
   const requestBody = await req.json();
@@ -40,8 +43,8 @@ export async function parseQuoteRequest(
   }
 
   const [balances, buyTokenData] = await Promise.all([
-    getSafeBalances(chainId, sender),
-    getTokenDetails(chainId, buyToken),
+    getSafeBalances(chainId, sender, zerionKey),
+    getTokenDetails(chainId, buyToken, tokenMap),
   ]);
   const sellTokenData = sellTokenAvailable(balances, sellToken);
 
