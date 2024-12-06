@@ -11,6 +11,7 @@ import { Address } from "viem";
 
 export async function getRouter(chainId: number) {
   const rpcUrl = getClient(chainId).transport.url;
+  console.log("Got RPC URL:", rpcUrl);
   return new AlphaRouter({
     chainId,
     // Uniswap uses ethers v5.7.0: So dumb
@@ -32,8 +33,6 @@ export async function getRoute(
     deadline: Math.floor(Date.now() / 1000 + 1800),
     type: SwapType.SWAP_ROUTER_02,
   };
-  // const rawTokenAmountIn = parseUnits(amountIn, inToken.decimals);
-
   return router.route(
     CurrencyAmount.fromRawAmount(inToken, amountIn.toString()),
     outToken,
