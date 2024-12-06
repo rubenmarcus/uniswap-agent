@@ -1,10 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { orderRequestFlow } from "./orderFlow";
-import { getZerionKey, validateNextRequest } from "../util";
+import { getSafeSaltNonce, getZerionKey, validateNextRequest } from "../util";
 import { parseQuoteRequest } from "./parse";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const headerError = await validateNextRequest(req);
+  const headerError = await validateNextRequest(req, getSafeSaltNonce());
   if (headerError) return headerError;
 
   try {
