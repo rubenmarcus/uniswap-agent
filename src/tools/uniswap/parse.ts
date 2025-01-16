@@ -48,7 +48,7 @@ export async function parseQuoteRequest(
     sellAmountBeforeFee: sellAmount,
     safeAddress: sender,
   } = requestBody;
-
+  console.log(`TokenMap for ${chainId} has ${tokenMap[chainId].length}`);
   if (sellAmount === "0") {
     throw new Error("Sell amount cannot be 0");
   }
