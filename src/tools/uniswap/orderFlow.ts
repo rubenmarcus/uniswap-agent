@@ -30,6 +30,7 @@ export async function orderRequestFlow({
     getToken(chainId, quoteRequest.sellToken),
     getToken(chainId, quoteRequest.buyToken),
   ]);
+  console.log(`Seeking Route for ${sellToken.symbol} --> ${buyToken.symbol}`);
   const route = await getRoute(
     chainId,
     quoteRequest.amount,
@@ -38,8 +39,10 @@ export async function orderRequestFlow({
     quoteRequest.walletAddress,
   );
   if (!route || !route.methodParameters) {
-    // Handle failed request
-    throw new Error(`Failed to get route on ${chainId} for quoteRequest`);
+    const message = `Failed to get route on ${chainId} for quoteRequest`;
+    console.error(message);
+    // TODO: Handle failed request
+    throw new Error(message);
   }
   console.log("Route found!");
   const approvalTx = await sellTokenApprovalTx({
