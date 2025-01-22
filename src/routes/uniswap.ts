@@ -25,9 +25,9 @@ router.post("/", async (req: Request, res: Response) => {
     console.log("Responding with", orderData);
     return res.status(200).json(orderData);
   } catch (e: unknown) {
-    const message = JSON.stringify((e as Error).message);
+    const message = (e as Error).message;
     console.error(message);
-    return res.status(400).json({ error: message });
+    return res.status(400).json({ ok: false, message });
   }
 });
 
