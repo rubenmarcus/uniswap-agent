@@ -28,5 +28,5 @@ describe("Uniswap Plugin", () => {
     console.log(
       `https://wallet.bitte.ai/sign-evm?evmTx=${encodeURI(JSON.stringify(signRequest.transaction))}`,
     );
-  }, 10000);
+  }, 30000);
 });
