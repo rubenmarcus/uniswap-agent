@@ -1,13 +1,7 @@
 import { config } from "dotenv";
 config();
 
-const key = JSON.parse(process.env.BITTE_KEY || "{}");
-const bitteConfig = JSON.parse(process.env.BITTE_CONFIG || "{}");
-if (!key?.accountId) {
-  console.error("no account");
-}
-
-const url = bitteConfig.url || "https://near-uniswap-agent.vercel.app";
+const url = "https://near-uniswap-agent.vercel.app";
 
 export const pluginData = {
   openapi: "3.0.0",
@@ -18,7 +12,7 @@ export const pluginData = {
   },
   servers: [{ url }],
   "x-mb": {
-    "account-id": key.accountId,
+    "account-id": "max-normal.near",
     assistant: {
       name: "Uniswap Assistant",
       description:
