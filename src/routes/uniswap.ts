@@ -1,9 +1,7 @@
 import { orderRequestFlow } from "../tools/uniswap/orderFlow";
 import {
-  // getSafeSaltNonce,
+
   getTokenMap,
-  // getZerionKey,
-  // validateExpressRequest,
 } from "../tools/util";
 import { parseQuoteRequest } from "../tools/uniswap/parse";
 import { Router, Request, Response, NextFunction } from "express";

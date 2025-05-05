@@ -10,6 +10,15 @@ This is a [Next.js](https://nextjs.org) project that implements an AI-powered ag
 - WETH wrapping and unwrapping
 - Price quotes and fee estimation for trades
 - Support for multiple EVM networks
+- Safe transaction execution
+- Ankr integration for blockchain data
+
+## Project Structure
+
+- `/src/tools/uniswap`: Core functionality for Uniswap interactions
+- `/src/tools/safe`: Safe transaction execution
+- `/src/tools/ankr`: Ankr API integration
+- `/api`: API entry points
 
 ## API Endpoints
 
@@ -23,6 +32,10 @@ First, install the dependencies:
 
 ```bash
 bun install
+# or
+pnpm install
+# or
+npm install
 ```
 
 Then, run the development server:
