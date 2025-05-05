@@ -1,14 +1,17 @@
 import { getClient, MetaTransaction, SignRequestData } from "near-safe";
 import { ParsedQuoteRequest } from "./parse";
-import { Address, erc20Abi, getAddress } from "viem";
+import { Address, erc20Abi, getAddress, encodeFunctionData } from "viem";
 import {
   getNativeAsset,
   signRequestFor,
   wrapMetaTransaction,
 } from "@bitte-ai/agent-sdk";
-import { getQuote, Token as QuoteToken } from "./quote";
-import { Token as SDKToken } from "@uniswap/sdk-core";
+import { getQuote, Token as QuoteToken, QuoteResult } from "./quote";
+import { Token as SDKToken, CurrencyAmount, Percent, TradeType } from "@uniswap/sdk-core";
 import { isNativeAsset, sellTokenApprovalTx } from "../util";
+import { QuoteParams } from "./parse";
+import { AlphaRouter, SwapType, SwapOptionsSwapRouter02, SwapRoute } from "@uniswap/smart-order-router";
+import { ANKR_API_ENDPOINT } from "../../config";
 
 // Convert SDK Token to Quote Token interface
 const adaptToken = (token: SDKToken): QuoteToken => ({
@@ -29,17 +32,24 @@ export async function orderRequestFlow({
 }> {
   console.log("Quote Request", quoteRequest);
   const metaTransactions: MetaTransaction[] = [];
-  if (isNativeAsset(quoteRequest.sellToken)) {
+
+  // Handle native ETH wrapping if needed
+  let sellTokenAddress = quoteRequest.sellToken;
+  if (isNativeAsset(sellTokenAddress)) {
     metaTransactions.push(
       wrapMetaTransaction(chainId, BigInt(quoteRequest.amount)),
     );
-    quoteRequest.sellToken = getNativeAsset(chainId).address;
+    sellTokenAddress = getNativeAsset(chainId).address;
   }
+
   const [sellToken, buyToken] = await Promise.all([
-    getToken(chainId, quoteRequest.sellToken),
+    getToken(chainId, sellTokenAddress),
     getToken(chainId, quoteRequest.buyToken),
   ]);
+
   console.log(`Seeking Route for ${sellToken.symbol} --> ${buyToken.symbol}`);
+
+  // Get the quote for the swap
   const route = await getQuote(
     chainId,
     BigInt(quoteRequest.amount),
@@ -47,13 +57,16 @@ export async function orderRequestFlow({
     adaptToken(buyToken),
     quoteRequest.walletAddress,
   );
+
   if (!route) {
     const message = `Failed to get route on ${chainId} for quoteRequest`;
     console.error(message);
-    // TODO: Handle failed request
     throw new Error(message);
   }
-  console.log("Route found!");
+
+  console.log("Route found!", route);
+
+  // Check if approval is needed for ERC20 tokens
   const approvalTx = await sellTokenApprovalTx({
     fromTokenAddress: sellToken.address,
     chainId,
@@ -61,26 +74,135 @@ export async function orderRequestFlow({
     spender: getSwapRouterAddress(chainId),
     sellAmount: quoteRequest.amount.toString(),
   });
+
   if (approvalTx) {
-    console.log("prepending approval");
-    // TODO: Update approval address.
+    console.log("Prepending approval transaction");
     metaTransactions.push(approvalTx);
   }
+
+  // Build the swap transaction using Uniswap SDK
+  const swapParams = buildSwapParams(route, sellToken, buyToken, quoteRequest);
+  console.log("Swap parameters:", swapParams);
+
+  // Encode the swap method call
   const swapTx = {
     to: getSwapRouterAddress(chainId),
-    data: "0x", // This needs to be updated based on the route information
-    value: "0", // This needs to be updated based on the route information
+    data: swapParams.calldata,
+    value: swapParams.value || "0",
   };
-  console.log("swapTx", JSON.stringify(swapTx, null, 2));
+
+  console.log("Swap transaction:", JSON.stringify(swapTx, null, 2));
   metaTransactions.push(swapTx);
+
   return {
     transaction: signRequestFor({
       chainId,
       from: getAddress(quoteRequest.walletAddress),
       metaTransactions,
     }),
-    meta: { orderData: "Uniswap Order Data" },
+    meta: { orderData: JSON.stringify(route) },
   };
+}
+
+/**
+ * Build the swap parameters for Uniswap router
+ */
+function buildSwapParams(
+  route: QuoteResult,
+  sellToken: SDKToken,
+  buyToken: SDKToken,
+  quoteRequest: QuoteParams
+): { calldata: string; value?: string } {
+  // Define swap parameters
+  const recipient = quoteRequest.walletAddress;
+  const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from now
+  const slippageTolerance = 0.5; // 0.5% slippage tolerance
+
+  // Calculate minimum amount out with slippage
+  const amountOutMin = BigInt(Math.floor(Number(route.quote) * (1 - slippageTolerance / 100)));
+
+  // Check if we're selling ETH (native asset)
+  const isSellingEth = isNativeAsset(quoteRequest.sellToken);
+
+  // For exactInputSingle - the most common swap type
+  // Interface for SwapRouter.exactInputSingle
+  const routerAbi = [
+    {
+      inputs: [
+        {
+          components: [
+            { name: "tokenIn", type: "address" },
+            { name: "tokenOut", type: "address" },
+            { name: "fee", type: "uint24" },
+            { name: "recipient", type: "address" },
+            { name: "amountIn", type: "uint256" },
+            { name: "amountOutMinimum", type: "uint256" },
+            { name: "sqrtPriceLimitX96", type: "uint160" },
+          ],
+          name: "params",
+          type: "tuple",
+        },
+      ],
+      name: "exactInputSingle",
+      outputs: [{ name: "amountOut", type: "uint256" }],
+      stateMutability: "payable",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          components: [
+            { name: "tokenIn", type: "address" },
+            { name: "tokenOut", type: "address" },
+            { name: "fee", type: "uint24" },
+            { name: "recipient", type: "address" },
+            { name: "deadline", type: "uint256" },
+            { name: "amountIn", type: "uint256" },
+            { name: "amountOutMinimum", type: "uint256" },
+            { name: "sqrtPriceLimitX96", type: "uint160" },
+          ],
+          name: "params",
+          type: "tuple",
+        },
+      ],
+      name: "exactInputSingle",
+      outputs: [{ name: "amountOut", type: "uint256" }],
+      stateMutability: "payable",
+      type: "function",
+    },
+  ];
+
+  // Try to find the most appropriate pool fee
+  const fee = 3000; // Default 0.3% fee tier
+
+  // Create the parameters for the swap
+  const params = {
+    tokenIn: sellToken.address,
+    tokenOut: buyToken.address,
+    fee: fee,
+    recipient: recipient,
+    deadline: deadline,
+    amountIn: quoteRequest.amount,
+    amountOutMinimum: amountOutMin,
+    sqrtPriceLimitX96: 0, // 0 for no price limit
+  };
+
+  // Encode the function call
+  try {
+    const calldata = encodeFunctionData({
+      abi: routerAbi,
+      functionName: "exactInputSingle",
+      args: [params],
+    });
+
+    return {
+      calldata,
+      value: isSellingEth ? quoteRequest.amount.toString() : "0",
+    };
+  } catch (error) {
+    console.error("Error encoding swap function:", error);
+    throw new Error("Failed to encode swap transaction");
+  }
 }
 
 export async function getToken(
