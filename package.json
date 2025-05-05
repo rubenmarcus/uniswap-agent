@@ -14,7 +14,7 @@
     "fmt": "eslint --fix '{src,tests}/**/*.{js,jsx,ts,tsx}' && prettier --write '{src,tests}/**/*.{js,jsx,ts,tsx}'",
     "test": "jest --config jest.config.ts",
     "vercel-build": "echo hello",
-    "build:deploy": "next build && make-agent deploy -u https://uniswap-agent-one.vercel.app/"
+    "build:deploy": "pnpm run build && make-agent deploy -u https://uniswap-agent-one.vercel.app/"
   },
   "dependencies": {
     "@bitte-ai/agent-sdk": "^0.1.10",
@@ -43,7 +43,7 @@
     "eslint-plugin-prettier": "^5.2.6",
     "globals": "^15.15.0",
     "jest": "^29.7.0",
-    "make-agent": "^0.2.12",
+    "make-agent": "^0.3.1",
     "prettier": "^3.5.3",
     "ts-jest": "^29.3.2",
     "tsx": "^4.19.3",

@@ -82,8 +82,8 @@ importers:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@22.15.5)
       make-agent:
-        specifier: ^0.2.12
-        version: 0.2.12(@types/node@22.15.5)(openapi-types@12.1.3)
+        specifier: ^0.3.1
+        version: 0.3.1(@types/node@22.15.5)(openapi-types@12.1.3)
       prettier:
         specifier: ^3.5.3
         version: 3.5.3
@@ -2948,8 +2948,8 @@ packages:
   lru_map@0.4.1:
     resolution: {integrity: sha512-I+lBvqMMFfqaV8CJCISjI3wbjmwVu/VyOoU7+qtu9d7ioW5klMgsTTiUOUp+DJvfTTzKXoPbyC6YfgkNcyPSOg==}
 
-  make-agent@0.2.12:
-    resolution: {integrity: sha512-3JV7X+s+QcHObFei1A3vjpLumpeRTyTdYS9khP8MabOFVbYuoFJ7zJNp2T0saN75FCiAcTP1thwfA1knja8XqQ==}
+  make-agent@0.3.1:
+    resolution: {integrity: sha512-14AGIytuA92JrQgEiQFsE1veZLjLkcXeKodiKHnY1YbLbGmVN4MjRJBbfDNjyA+JdQwULQ9Mct6ASZvt2HCt+g==}
     hasBin: true
 
   make-dir@4.0.0:
@@ -8166,7 +8166,7 @@ snapshots:
 
   lru_map@0.4.1: {}
 
-  make-agent@0.2.12(@types/node@22.15.5)(openapi-types@12.1.3):
+  make-agent@0.3.1(@types/node@22.15.5)(openapi-types@12.1.3):
     dependencies:
       '@apidevtools/swagger-parser': 10.1.1(openapi-types@12.1.3)
       ajv: 8.17.1

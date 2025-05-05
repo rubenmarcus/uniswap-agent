@@ -6,9 +6,18 @@ import {
   signRequestFor,
   wrapMetaTransaction,
 } from "@bitte-ai/agent-sdk";
-import { getRoute } from "./quote";
-import { Token } from "@uniswap/sdk-core";
+import { getQuote, Token as QuoteToken } from "./quote";
+import { Token as SDKToken } from "@uniswap/sdk-core";
 import { isNativeAsset, sellTokenApprovalTx } from "../util";
+
+// Convert SDK Token to Quote Token interface
+const adaptToken = (token: SDKToken): QuoteToken => ({
+  chainId: token.chainId,
+  address: token.address,
+  decimals: token.decimals,
+  symbol: token.symbol || "",
+  name: token.name || "",
+});
 
 // https://docs.uniswap.org/sdk/v3/guides/swaps/routing
 export async function orderRequestFlow({
@@ -31,14 +40,14 @@ export async function orderRequestFlow({
     getToken(chainId, quoteRequest.buyToken),
   ]);
   console.log(`Seeking Route for ${sellToken.symbol} --> ${buyToken.symbol}`);
-  const route = await getRoute(
+  const route = await getQuote(
     chainId,
-    quoteRequest.amount,
-    sellToken,
-    buyToken,
+    BigInt(quoteRequest.amount),
+    adaptToken(sellToken),
+    adaptToken(buyToken),
     quoteRequest.walletAddress,
   );
-  if (!route || !route.methodParameters) {
+  if (!route) {
     const message = `Failed to get route on ${chainId} for quoteRequest`;
     console.error(message);
     // TODO: Handle failed request
@@ -59,8 +68,8 @@ export async function orderRequestFlow({
   }
   const swapTx = {
     to: getSwapRouterAddress(chainId),
-    data: route.methodParameters.calldata,
-    value: route.methodParameters.value,
+    data: "0x", // This needs to be updated based on the route information
+    value: "0", // This needs to be updated based on the route information
   };
   console.log("swapTx", JSON.stringify(swapTx, null, 2));
   metaTransactions.push(swapTx);
@@ -77,7 +86,7 @@ export async function orderRequestFlow({
 export async function getToken(
   chainId: number,
   address: Address,
-): Promise<Token> {
+): Promise<SDKToken> {
   const client = getClient(chainId);
   const [decimals, symbol, name] = await Promise.all([
     client.readContract({
@@ -96,7 +105,7 @@ export async function getToken(
       functionName: "name",
     }),
   ]);
-  return new Token(chainId, address, decimals, symbol, name);
+  return new SDKToken(chainId, address, decimals, symbol, name);
 }
 
 const swapRouterOverrides: Map<number, string> = new Map([
