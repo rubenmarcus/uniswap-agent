@@ -1,7 +1,7 @@
 import { config } from "dotenv";
 config();
 
-const url = "https://near-uniswap-agent.vercel.app";
+const url = "https://uniswap-agent-one.vercel.app/";
 
 export const pluginData = {
   openapi: "3.0.0",
