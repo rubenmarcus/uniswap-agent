@@ -6,15 +6,15 @@ const url = "https://near-uniswap-agent.vercel.app";
 export const pluginData = {
   openapi: "3.0.0",
   info: {
-    title: "Bitte Uniswap Agent",
+    title: "Uniswap Agent",
     description: "API for interactions with Uniswap V3",
     version: "1.0.1",
   },
   servers: [{ url }],
   "x-mb": {
-    "account-id": "max-normal.near",
+    "account-id": "0x58754047b0D25ffB23F05D5fc6dD9ccE1d5ACC58",
     assistant: {
-      name: "Uniswap Assistant",
+      name: "Uniswap Agent",
       description:
         "An assistant that generates transaction data for Uniswap V3 Interactions",
       instructions:

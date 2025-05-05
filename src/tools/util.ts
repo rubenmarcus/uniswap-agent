@@ -98,9 +98,6 @@ function getEnvVar(key: string): string {
   }
   return value;
 }
-export function getZerionKey(): string {
-  return getEnvVar("ZERION_KEY");
-}
 
 export function getSafeSaltNonce(): string {
   const bitteProtocolSaltNonce = "130811896738364156958237239906781888512";

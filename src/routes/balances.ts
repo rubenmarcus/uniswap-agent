@@ -1,16 +1,16 @@
 import {
   addressField,
   FieldParser,
-  getSafeBalances,
   handleRequest,
   numberField,
   validateInput,
   TokenBalance,
-} from "@bitte-ai/agent-sdk";
+} from "../types/agent-sdk";
 import { Address } from "viem";
 import { Router, Request, Response, NextFunction } from "express";
 
-import { getZerionKey } from "../tools/util";
+// Import our ANKR implementation instead of Zerion
+import { getSafeBalances } from "../tools/safe";
 
 interface Input {
   chainId: number;
@@ -29,7 +29,8 @@ async function logic(req: Request): Promise<TokenBalance[]> {
   );
   console.log("Request: balances/", search);
   const { chainId, safeAddress } = validateInput<Input>(search, parsers);
-  const balances = await getSafeBalances(chainId, safeAddress, getZerionKey());
+  // No need for Zerion API key with ANKR
+  const balances = await getSafeBalances(chainId, safeAddress);
   console.log(`Retrieved ${balances.length} balances for ${safeAddress}`);
   return balances;
 }
@@ -37,7 +38,7 @@ async function logic(req: Request): Promise<TokenBalance[]> {
 const router = Router();
 
 router.get("/", (req: Request, res: Response, next: NextFunction) => {
-  handleRequest(req, logic, (x) => res.status(200).json(x)).catch(next);
+  handleRequest(req, logic, (x: TokenBalance[]) => res.status(200).json(x)).catch(next);
 });
 
 export { router as balancesRouter };

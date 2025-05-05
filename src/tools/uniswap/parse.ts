@@ -1,13 +1,13 @@
-import { Address, getAddress, isAddress, parseUnits } from "viem";
+import { Address, getAddress, parseUnits } from "viem";
 import {
-  getTokenDetails,
   TokenInfo,
-  getSafeBalances,
   TokenBalance,
   BlockchainMapping,
-} from "@bitte-ai/agent-sdk";
+} from "../../types/agent-sdk";
 import { NATIVE_ASSET } from "../util";
 import { Network } from "near-safe";
+import { getSafeBalances, getTokenDetails } from "../safe";
+
 export type QuoteParams = {
   sellToken: Address;
   buyToken: Address;
@@ -36,7 +36,6 @@ type LooseRequest = {
 export async function parseQuoteRequest(
   req: LooseRequest,
   tokenMap: BlockchainMapping,
-  zerionKey?: string,
 ): Promise<ParsedQuoteRequest> {
   // TODO - Add Type Guard on Request (to determine better if it needs processing below.)
   const requestBody = req.body;
@@ -57,7 +56,7 @@ export async function parseQuoteRequest(
   }
 
   const [balances, buyTokenData] = await Promise.all([
-    getSafeBalances(chainId, sender, zerionKey),
+    getSafeBalances(chainId, sender),
     getTokenDetails(chainId, buyToken, tokenMap),
   ]);
   const sellTokenData = sellTokenAvailable(chainId, balances, sellToken);
@@ -69,8 +68,8 @@ export async function parseQuoteRequest(
   return {
     chainId,
     quoteRequest: {
-      sellToken: sellTokenData.address,
-      buyToken: buyTokenData.address,
+      sellToken: sellTokenData.address as Address,
+      buyToken: buyTokenData.address as Address,
       amount: parseUnits(sellAmount, sellTokenData.decimals),
       walletAddress: sender,
     },
@@ -110,4 +109,13 @@ function sellTokenAvailable(
 
 function nativeAssetSymbol(chainId: number): string {
   return Network.fromChainId(chainId).nativeCurrency.symbol;
+}
+
+// Helper function to check if a string is an address (moved from Zerion's implementation)
+function isAddress(value: string, options?: { strict: boolean }): boolean {
+  try {
+    return value.startsWith('0x') && (options?.strict === false || value.length === 42);
+  } catch {
+    return false;
+  }
 }
